@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Events Manager</title>
+  <link rel="stylesheet" type="text/css" href="css/app.css">
+<!--  <script type="text/javascript" src="js/app.js" defer></script>-->
+</head>
+<body>
+<!-- title -->
+<header class="header">
+  <h1 class="page-title">Events Manager</h1>
+  <!-- main navbar -->
+  <nav class="nav">
+    <a href="/about" class="nav-item">About Me</a>
+    <a href="/skills-and-ability" class="nav-item">Marketing skills and abiliity</a>
+    <a href="/projects" class="nav-item active">Projects</a>
+    <a href="/reuse" class="nav-item">Reuse</a>
+    <a href="/contacts" class="nav-item">Contact Me</a>
+  </nav>
+</header>
+<ul id="cards-wrapper">
+</ul>
+  <script>
+    const RSS_File = "events.rss";
+
+    fetch(RSS_File)
+            .then(response => response.text())
+            .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+            .then(data => {
+              const items = data.querySelectorAll("item");
+              let events_data = ``;
+              items.forEach(item => {
+                events_data += `
+                <article class="card">
+                  <img src="${item.querySelector("enclosure").getAttribute("url")}" alt="">
+                  <h3>${item.querySelector("title").innerHTML}</h3>
+                  <p>${item.querySelector("start").innerHTML}</p>
+                  <p>${item.querySelector("location").innerHTML}</p>
+                  <button class="toggle-btn">Learn More</button>
+                  <p>${item.querySelector("description").innerHTML}</p>
+                </article>
+              `;
+              });
+              document.getElementById("cards-wrapper").innerHTML = events_data;
+            });
+  </script>
+
+</body>
+</html>
