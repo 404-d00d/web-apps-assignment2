@@ -1,7 +1,7 @@
 "use strict";
 
 // Function to fetch RSS feed and generate HTML content
-function fetchAndGenerateEvents(filterData) {
+function fetchAndGenerateEvents(filterObj) {
   const RSS_File = "events.rss";
 
   fetch(RSS_File)
@@ -12,21 +12,25 @@ function fetchAndGenerateEvents(filterData) {
       let events = Array.from(items); // Convert NodeList to array for filtering
 
       // Apply filters
-      events = filterEvents(events, filterData, applyFilters);
+      let filteredByTitle = filterEvents(events, filterObj.title, titleFilter);
+      let filteredByDesc = filterEvents(events, filterObj.description, descriptionFilter);
+      let filteredByDate = filterEvents(events, filterObj.startDate, dateFilter);
 
       // Generate HTML content
       let events_data = ``;
-      events.forEach(item => {
-        events_data += `
-          <article class="card">
-            <img src="${item.querySelector("enclosure").getAttribute("url")}" alt="">
-            <h3>${item.querySelector("title").innerHTML}</h3>
-            <p>${item.querySelector("start").innerHTML}</p>
-            <p>${item.querySelector("location").innerHTML}</p>
-            <button class="toggle-btn">Learn More</button>
-            <p>${item.querySelector("description").innerHTML}</p>
-          </article>
-        `;
+      [filteredByTitle, filteredByDesc, filteredByDate].forEach(filteredEvents => {
+        filteredEvents.forEach(item => {
+          events_data += `
+            <article class="card">
+              <img src="${item.querySelector("enclosure").getAttribute("url")}" alt="">
+              <h3>${item.querySelector("title").innerHTML}</h3>
+              <p>${item.querySelector("start").innerHTML}</p>
+              <p>${item.querySelector("location").innerHTML}</p>
+              <button class="toggle-btn">Learn More</button>
+              <p>${item.querySelector("description").innerHTML}</p>
+            </article>
+          `;
+        });
       });
 
       // Display filtered events
@@ -37,58 +41,33 @@ function fetchAndGenerateEvents(filterData) {
     });
 }
 
-// Function named filterEvents to accept as input a list of events, a property value, and a filter function,
-// and filters the list of events according to the values entered by the user
+// Function to filter events
 function filterEvents(events, filterValue, filterFunction) {
   return filterFunction(events, filterValue);
 }
 
 // Function to filter events by title
-function filterByTitle(events, title) {
+function titleFilter(events, title) {
   if (!title) return events;
   return events.filter(item =>
-    item.querySelector("title").innerHTML.toLowerCase().includes(title.toLowerCase())
+    item.querySelector("title").innerHTML.toLowerCase().includes(title.trim().toLowerCase())
   );
 }
 
 // Function to filter events by start date
-function filterByStart(events, start) {
-  if (!start) return events;
+function dateFilter(events, startDate) {
+  if (!startDate) return events;
   return events.filter(item =>
-    item.querySelector("start").innerHTML.toLowerCase().includes(start.toLowerCase())
+    item.querySelector("start").innerHTML.toLowerCase().includes(startDate.trim().toLowerCase())
   );
 }
 
 // Function to filter events by description
-function filterByDescription(events, desc) {
-  if (!desc) return events;
+function descriptionFilter(events, description) {
+  if (!description) return events;
   return events.filter(item =>
-    item.querySelector("description").innerHTML.toLowerCase().includes(desc.toLowerCase())
+    item.querySelector("description").innerHTML.toLowerCase().includes(description.trim().toLowerCase())
   );
-}
-
-// Function to apply filters
-function applyFilters(events, filters) {
-  let filteredEvents = events;
-  const { title, start, desc } = filters;
-
-  if (title) {
-    filteredEvents = filterByTitle(filteredEvents, title);
-  }
-  if (start) {
-    filteredEvents = filterByStart(filteredEvents, start);
-  }
-  if (desc) {
-    filteredEvents = filterByDescription(filteredEvents, desc);
-  }
-
-  return filteredEvents;
-}
-
-// Function to get query parameter value from URL
-function getQueryParam(name) {
-  const params = new URLSearchParams(window.location.search);
-  return params.get(name);
 }
 
 // Event listener for form submission
@@ -96,22 +75,37 @@ document.querySelector('.filter-form').addEventListener('submit', function(event
   event.preventDefault();
 
   // Get the filter values from the form fields
-  const title = document.getElementById('title').value;
-  const start = document.getElementById('start').value;
-  const desc = document.getElementById('desc').value;
+  let title = document.getElementById('title').value;
+  let start = document.getElementById('start').value;
+  let desc = document.getElementById('desc').value;
+
+  let filterObj = {
+           title,
+           startDate: start,
+           description: desc
+    }
 
   // Fetch and generate events with the updated filter values
-  fetchAndGenerateEvents({ title, start, desc });
+  fetchAndGenerateEvents(filterObj);
 });
 
 // Initial fetch and generation of events when the page loads
 document.addEventListener('DOMContentLoaded', function() {
-  const title = getQueryParam('title');
-  const start = getQueryParam('start');
-  const desc = getQueryParam('desc');
+  let title = getQueryParam('title');
+  let start = getQueryParam('start');
+  let desc = getQueryParam('desc');
 
-  fetchAndGenerateEvents({ title, start, desc });
+  let filterObj = {
+         title,
+         startDate: start,
+         description: desc
+  }
+
+  // Fetch and generate events with the default filter values
+  fetchAndGenerateEvents(filterObj);
 });
+
+
 
 
 
