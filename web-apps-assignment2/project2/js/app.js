@@ -4,13 +4,14 @@
 function dateConverter (daet) {
     var event_date = daet;
     event_date = event_date.replace(event_date.substring(17, 29), '');
-    var event_day = event_date.substring(5, 7);
+    var event_day = event_date.substring(4, 7);
     var event_month = event_date.substring(8, 12);
-    event_date = event_date.substring(0, 4)+' '+event_month+' '+event_day+', '+event_date.substring(12, 17);
-    event_date = event_date.replace('Mon', 'Monday').replace('Jan', 'January').replace('Feb', 'February');
+    event_day = event_day.replace(' 0', ' ');
+    event_date = event_date.substring(0, 3)+' '+event_month+' '+event_day+', '+event_date.substring(12, 17);
+    event_date = event_date.replace('Mon', 'Monday,').replace('Jan', 'January').replace('Feb', 'February');
     event_date = event_date.replace('Mar', 'March').replace('Apr', 'April');
-    event_date = event_date.replace('Tue', 'Tuesday').replace('Wed', 'Wednesday').replace('Thu', 'Thursday');
-    event_date = event_date.replace('Fri', 'Friday').replace('Sat', 'Saturday').replace('Sun', 'Sunday');
+    event_date = event_date.replace('Tue', 'Tuesday,').replace('Wed', 'Wednesday,').replace('Thu', 'Thursday,');
+    event_date = event_date.replace('Fri', 'Friday,').replace('Sat', 'Saturday,').replace('Sun', 'Sunday,');
     return event_date;
 }
 
@@ -43,13 +44,18 @@ function fetchAndGenerateEvents(filterObj) {
           <article class="card">
             <img src="${item.querySelector("enclosure").getAttribute("url")}" alt="">
             <h3>${item.querySelector("title").innerHTML}</h3>
-            <p>${dateConverter(item.querySelector("start").innerHTML)}</p>
+            <p class="date">${dateConverter(item.querySelector("start").innerHTML)}</p>
             <p>${item.querySelector("location").innerHTML}</p>
             <button class="toggle-btn">Learn More</button>
             <p>${item.querySelector("description").innerHTML.replace(']]>','')}</p>
           </article>
         `;
       });
+
+      document.getElementById("cards-wrapper").innerHTML = events_data;
+      const totalPageShowings = events.length;
+      const totalEvents = items.length;
+      document.getElementById("page-count").textContent = `Showing: ${totalPageShowings} / ${totalEvents}`;
 
       // Display filtered events
       document.getElementById("cards-wrapper").innerHTML = events_data;
@@ -76,7 +82,7 @@ function titleFilter(events, title) {
 function dateFilter(events, startDate) {
   if (!startDate) return events;
   return events.filter(item =>
-    item.querySelector("start").innerHTML.toLowerCase().includes(startDate.trim().toLowerCase())
+    item.querySelector(".date").innerHTML.toLowerCase().includes(startDate.trim().toLowerCase())
   );
 }
 
@@ -94,7 +100,7 @@ document.querySelector('.filter-form').addEventListener('submit', function(event
 
   // Get the filter values from the form fields
   let title = document.getElementById('title').value;
-  let start = dateConverter(document.getElementById('start').value);
+  let start = document.getElementById('start').value;
   let desc = document.getElementById('desc').value;
 
   let filterObj = {
@@ -110,7 +116,7 @@ document.querySelector('.filter-form').addEventListener('submit', function(event
 // Initial fetch and generation of events when the page loads
 document.addEventListener('DOMContentLoaded', function() {
   let title = getQueryParam('title');
-  let start = dateConverter(getQueryParam('start'));
+  let start = getQueryParam('start');
   let desc = getQueryParam('desc');
 
   let filterObj = {
@@ -145,10 +151,16 @@ document.getElementById('cards-wrapper').addEventListener('click', function(even
     // Get the parent card element
     const card = target.closest('.card');
 
-    // Switch between showing the text or hiding it
+    // Get the title and description elements
     const title = card.querySelector('.p-name');
     const description = card.querySelector('div p');
-    if (description.style.display == 'none' || title.style.display == 'none') {
+
+    // Check if inline style is explicitly set
+    const titleDisplayStyle = window.getComputedStyle(title).display;
+    const descriptionDisplayStyle = window.getComputedStyle(description).display;
+
+    // Toggle the display of title and description
+    if (titleDisplayStyle === 'none' || descriptionDisplayStyle === 'none') {
       title.style.display = 'block';
       description.style.display = 'block';
     } else {
