@@ -1,7 +1,21 @@
 "use strict";
 
+// converts date on rss file into proper format shown on rubric
+function dateConverter (daet) {
+    var event_date = daet;
+    event_date = event_date.replace(event_date.substring(17, 29), '');
+    var event_day = event_date.substring(5, 7);
+    var event_month = event_date.substring(8, 12);
+    event_date = event_date.substring(0, 4)+' '+event_month+' '+event_day+', '+event_date.substring(12, 17);
+    event_date = event_date.replace('Mon', 'Monday').replace('Jan', 'January').replace('Feb', 'February');
+    event_date = event_date.replace('Mar', 'March').replace('Apr', 'April');
+    event_date = event_date.replace('Tue', 'Tuesday').replace('Wed', 'Wednesday').replace('Thu', 'Thursday');
+    event_date = event_date.replace('Fri', 'Friday').replace('Sat', 'Saturday').replace('Sun', 'Sunday');
+    return event_date;
+}
+
 // Function to fetch RSS feed and generate HTML content
-function fetchAndGenerateEvents(filterData) {
+function fetchAndGenerateEvents(filterObj) {
   const RSS_File = "events.rss";
 
   fetch(RSS_File)
@@ -12,7 +26,15 @@ function fetchAndGenerateEvents(filterData) {
       let events = Array.from(items); // Convert NodeList to array for filtering
 
       // Apply filters
-      events = filterEvents(events, filterData, applyFilters);
+      if (filterObj.title) {
+        events = filterEvents(events, filterObj.title, titleFilter);
+      }
+      if (filterObj.startDate) {
+        events = filterEvents(events, filterObj.startDate, dateFilter);
+      }
+      if (filterObj.description) {
+        events = filterEvents(events, filterObj.description, descriptionFilter);
+      }
 
       // Generate HTML content
       let events_data = ``;
@@ -21,7 +43,7 @@ function fetchAndGenerateEvents(filterData) {
           <article class="card">
             <img src="${item.querySelector("enclosure").getAttribute("url")}" alt="">
             <h3>${item.querySelector("title").innerHTML}</h3>
-            <p>${item.querySelector("start").innerHTML}</p>
+            <p>${dateConverter(item.querySelector("start").innerHTML)}</p>
             <p>${item.querySelector("location").innerHTML}</p>
             <button class="toggle-btn">Learn More</button>
             <p>${item.querySelector("description").innerHTML.replace(']]>','')}</p>
@@ -37,58 +59,33 @@ function fetchAndGenerateEvents(filterData) {
     });
 }
 
-// Function named filterEvents to accept as input a list of events, a property value, and a filter function,
-// and filters the list of events according to the values entered by the user
+// Function to filter events
 function filterEvents(events, filterValue, filterFunction) {
   return filterFunction(events, filterValue);
 }
 
 // Function to filter events by title
-function filterByTitle(events, title) {
+function titleFilter(events, title) {
   if (!title) return events;
   return events.filter(item =>
-    item.querySelector("title").innerHTML.toLowerCase().includes(title.toLowerCase())
+    item.querySelector("title").innerHTML.toLowerCase().includes(title.trim().toLowerCase())
   );
 }
 
 // Function to filter events by start date
-function filterByStart(events, start) {
-  if (!start) return events;
+function dateFilter(events, startDate) {
+  if (!startDate) return events;
   return events.filter(item =>
-    item.querySelector("start").innerHTML.toLowerCase().includes(start.toLowerCase())
+    item.querySelector("start").innerHTML.toLowerCase().includes(startDate.trim().toLowerCase())
   );
 }
 
 // Function to filter events by description
-function filterByDescription(events, desc) {
-  if (!desc) return events;
+function descriptionFilter(events, description) {
+  if (!description) return events;
   return events.filter(item =>
-    item.querySelector("description").innerHTML.toLowerCase().includes(desc.toLowerCase())
+    item.querySelector("description").innerHTML.toLowerCase().includes(description.trim().toLowerCase())
   );
-}
-
-// Function to apply filters
-function applyFilters(events, filters) {
-  let filteredEvents = events;
-  const { title, start, desc } = filters;
-
-  if (title) {
-    filteredEvents = filterByTitle(filteredEvents, title);
-  }
-  if (start) {
-    filteredEvents = filterByStart(filteredEvents, start);
-  }
-  if (desc) {
-    filteredEvents = filterByDescription(filteredEvents, desc);
-  }
-
-  return filteredEvents;
-}
-
-// Function to get query parameter value from URL
-function getQueryParam(name) {
-  const params = new URLSearchParams(window.location.search);
-  return params.get(name);
 }
 
 // Event listener for form submission
@@ -96,22 +93,43 @@ document.querySelector('.filter-form').addEventListener('submit', function(event
   event.preventDefault();
 
   // Get the filter values from the form fields
-  const title = document.getElementById('title').value;
-  const start = document.getElementById('start').value;
-  const desc = document.getElementById('desc').value;
+  let title = document.getElementById('title').value;
+  let start = dateConverter(document.getElementById('start').value);
+  let desc = document.getElementById('desc').value;
+
+  let filterObj = {
+           title,
+           startDate: start,
+           description: desc
+    }
 
   // Fetch and generate events with the updated filter values
-  fetchAndGenerateEvents({ title, start, desc });
+  fetchAndGenerateEvents(filterObj);
 });
 
 // Initial fetch and generation of events when the page loads
 document.addEventListener('DOMContentLoaded', function() {
-  const title = getQueryParam('title');
-  const start = getQueryParam('start');
-  const desc = getQueryParam('desc');
+  let title = getQueryParam('title');
+  let start = dateConverter(getQueryParam('start'));
+  let desc = getQueryParam('desc');
 
-  fetchAndGenerateEvents({ title, start, desc });
+  let filterObj = {
+         title,
+         startDate: start,
+         description: desc
+  }
+
+  // Fetch and generate events with the default filter values
+  fetchAndGenerateEvents(filterObj);
 });
+
+// Fetches and generates events with filters sent to blank
+const defaultFilters = {
+  title: "",
+  startDate: "",
+  description: ""
+};
+fetchAndGenerateEvents(defaultFilters);
 
 // Clear filter button resets filters by refreshing page
 document.querySelector('.filter-form').addEventListener('reset', function(event) {
@@ -130,7 +148,7 @@ document.getElementById('cards-wrapper').addEventListener('click', function(even
     // Switch between showing the text or hiding it
     const title = card.querySelector('.p-name');
     const description = card.querySelector('div p');
-    if (description.style.display == 'none') {
+    if (description.style.display == 'none' || title.style.display == 'none') {
       title.style.display = 'block';
       description.style.display = 'block';
     } else {
@@ -139,9 +157,3 @@ document.getElementById('cards-wrapper').addEventListener('click', function(even
     }
   }
 });
-
-
-
-
-
-

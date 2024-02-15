@@ -100,4 +100,9 @@ header.header .page-header {
 
 .p-name {
     margin: 0.5em;
+    display: none
+}
+
+div p {
+    display: none;
 }
