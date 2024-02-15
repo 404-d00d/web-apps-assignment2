@@ -24,7 +24,7 @@ function fetchAndGenerateEvents(filterData) {
             <p>${item.querySelector("start").innerHTML}</p>
             <p>${item.querySelector("location").innerHTML}</p>
             <button class="toggle-btn">Learn More</button>
-            <p>${item.querySelector("description").innerHTML}</p>
+            <p>${item.querySelector("description").innerHTML.replace(']]>','')}</p>
           </article>
         `;
       });
