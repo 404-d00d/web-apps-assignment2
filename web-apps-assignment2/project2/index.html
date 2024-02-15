@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Events Manager</title>
+  <link rel="stylesheet" type="text/css" href="css/app.css">
+  <script type="text/javascript" src="js/app.js" defer></script>
+</head>
+<body>
+<!-- title -->
+<header class="header">
+  <h1 class="page-title">Events Manager</h1>
+  <!-- main navbar -->
+  <nav class="nav">
+    <a href="/about" class="nav-item">About Me</a>
+    <a href="/skills-and-ability" class="nav-item">Marketing skills and abiliity</a>
+    <a href="/projects" class="nav-item active">Projects</a>
+    <a href="/reuse" class="nav-item">Resume</a>
+    <a href="/contacts" class="nav-item">Contact Me</a>
+  </nav>
+
+  <h3 class="page-header">My Events Manager</h3>
+
+  <span class="results-count"></span>
+
+  <h6>Filter Events</h6>
+
+  <form class="filter-form" action="">
+    <div class="form-field">
+      <label for="title">Title</label>
+      <input id="title" name="title">
+    </div>
+    <div class="form-field">
+      <label for="desc">Desc</label>
+      <input id="desc" name="desc">
+    </div>
+    <div class="form-field">
+      <label for="start">Date</label>
+      <input id="start" name="start">
+    </div>
+    <div class="buttons">
+      <button type="submit">Submit</button>
+      <button type="reset">Clear Filters</button>
+    </div>
+  </form>
+
+
+</header>
+<ul id="cards-wrapper">
+</ul>
+
+
+
+
+</body>
+</html>
