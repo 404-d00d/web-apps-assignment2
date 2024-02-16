@@ -1,197 +1,187 @@
-
-
 "use strict";
-// ten = 10 // use strict works
 
-
-
-
-
-
-
-// get the main container where articles are loaded
-const eventsContainer = document.querySelector('.events');
-
-
-const urlParams = new URLSearchParams(window.location.search);
-
-console.log(urlParams)
-let filterData = {
-  'title': urlParams.get('title'),
-  'start': urlParams.get('start'),
-  'desc': urlParams.get('desc'),
-};
-console.log(filterData.title)
-
-
-
-// create filter functions
-function filterByTitle(events, filterValue) {
-  let results = [];
-
-  if(!filterData.title) {
-    return events;
-  }
-
-  document.querySelector('input[name="title"]').value = filterData.title
-  events.forEach((event, i) => {
-    if(event.querySelectorAll('title')[0].innerHTML.toLowerCase().indexOf(filterValue.title.toLowerCase()) != -1) {
-      results.push(event);
-    }
-  })
-  return results;
+// converts date on rss file into proper format shown on rubric
+function dateConverter (daet) {
+    var event_date = daet;
+    event_date = event_date.replace(event_date.substring(17, 29), '');
+    var event_day = event_date.substring(5, 7);
+    var event_month = event_date.substring(8, 12);
+    event_date = event_date.substring(0, 4)+' '+event_month+' '+event_day+', '+event_date.substring(12, 17);
+    event_date = event_date.replace('Mon', 'Monday').replace('Jan', 'January').replace('Feb', 'February');
+    event_date = event_date.replace('Mar', 'March').replace('Apr', 'April');
+    event_date = event_date.replace('Tue', 'Tuesday').replace('Wed', 'Wednesday').replace('Thu', 'Thursday');
+    event_date = event_date.replace('Fri', 'Friday').replace('Sat', 'Saturday').replace('Sun', 'Sunday');
+    return event_date;
 }
 
-function filterByDate(events, filterValue) {
-  let results = [];
+// Function to fetch RSS feed and generate HTML content
+function fetchAndGenerateEvents(filterObj) {
+  const RSS_File = "events.rss";
 
-  if(!filterData.start) {
-    return events;
-  }
+  fetch(RSS_File)
+    .then(response => response.text())
+    .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+    .then(data => {
+      const items = data.querySelectorAll("item");
+      let events = Array.from(items); // Convert NodeList to array for filtering
 
-  document.querySelector('input[name="start"]').value = filterData.start
-  events.forEach((event, i) => {
-    if(event.querySelectorAll('start')[0].innerHTML.toLowerCase().indexOf(filterValue.start.toLowerCase()) != -1) {
-      results.push(event);
-    }
-  })
-  return results;
-}
-
-
-function filterByDesc(events, filterValue) {
-  let results = [];
-
-  if(!filterData.desc) {
-    return events;
-  }
-
-  document.querySelector('input[name="desc"]').value = filterData.desc
-  events.forEach((event, i) => {
-    if(event.querySelectorAll('description')[0].innerHTML.toLowerCase().indexOf(filterValue.desc.toLowerCase()) != -1) {
-      results.push(event);
-    }
-  })
-  return results;
-}
-
-
-const filterEvents = async (events, filterValue, filterFunction) => {
-  return await filterFunction(events, filterValue)
-}
-
-// fetch data from server
-const url = new Request('data/events.rss');
-let totalEvents = 0;
-// const url = 'events.rss';
-fetch(url)
-  .then(response => response.text())
-  .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
-  .then(data => {
-    totalEvents = data.querySelectorAll("item").length;
-    return data.querySelectorAll("item");
-  })
-  .then(events => filterEvents(events, filterData, filterByTitle))
-  .then(events => filterEvents(events, filterData, filterByDate))
-  .then(events => filterEvents(events, filterData, filterByDesc))
-  .then(events => {
-    // console.log(events)
-
-    for (const event of events) {
-
-      // let imageItem = event.querySelectorAll('enclosure')[0].outerHTML
-      // console.log(event.querySelectorAll('description')[0].innerHTML)
-      // console.log(event.querySelectorAll('enclosure')[0].getAttribute('url'))
-      // console.log(imageItem.querySelectorAll("url"))
-
-      // create an article element
-      let eventItem = document.createElement('article');
-      eventItem.classList.add('event-item');
-
-
-      // add an image element
-      let eventImage = document.createElement('img');
-      let imageUrl = 'images/placeholder.png';
-
-      if(event.querySelectorAll('enclosure').length) {
-        imageUrl = event.querySelectorAll('enclosure')[0].getAttribute('url');
+      // Apply filters
+      if (filterObj.title) {
+        events = filterEvents(events, filterObj.title, titleFilter);
       }
-      eventItem.appendChild(eventImage).src = imageUrl;
+      if (filterObj.startDate) {
+        events = filterEvents(events, filterObj.startDate, dateFilter);
+      }
+      if (filterObj.description) {
+        events = filterEvents(events, filterObj.description, descriptionFilter);
+      }
 
-      // add event title
-      let eventTitle = document.createElement('h4');
-      eventTitle.classList.add('event-title');
-      eventTitle.textContent = event.querySelectorAll('title')[0].innerHTML;
-      eventItem.appendChild(eventTitle);
-
-
-
-      // add event time
-      let date = new Date(event.querySelectorAll('start')[0].innerHTML);
-
-      let dateItem = document.createElement('p');
-      dateItem.classList.add('event-date');
-
-      let options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timezone: 'EST', timeZoneName: 'short' };
-      dateItem.textContent = date.toLocaleDateString('en-US', options)
-
-      eventItem.appendChild(dateItem);
-
-
-      // add location
-      let locationItem = document.createElement('p');
-      locationItem.classList.add('event-location');
-      locationItem.textContent = event.querySelectorAll('location')[0].innerHTML
-
-      eventItem.appendChild(locationItem);
-
-
-      // add toggle button
-      let eventButton = document.createElement('button');
-      eventButton.classList.add('learn-more-button');
-      eventButton.textContent = 'Learn more';
-      eventItem.appendChild(eventButton);
-
-      eventButton.addEventListener('click', function() {
-
-        let item = this.parentElement.querySelector('.event-description');
-        item.classList.toggle('hidden')
-
-
+      // Generate HTML content
+      let events_data = ``;
+      events.forEach(item => {
+        events_data += `
+          <article class="card">
+            <img src="${item.querySelector("enclosure").getAttribute("url")}" alt="">
+            <h3>${item.querySelector("title").innerHTML}</h3>
+            <p>${dateConverter(item.querySelector("start").innerHTML)}</p>
+            <p>${item.querySelector("location").innerHTML}</p>
+            <button class="toggle-btn">Learn More</button>
+            <p>${item.querySelector("description").innerHTML.replace(']]>','')}</p>
+          </article>
+        `;
       });
+      // Display filtered events
+      document.getElementById("cards-wrapper").innerHTML = events_data;
+      const totalPageShowings = events.length;
+      const totalEvents = items.length;
+      document.getElementById("page-count").textContent = `Showing: ${totalPageShowings} / ${totalEvents}`;
 
 
-      // add description
-      let descItem = document.createElement('p');
-      descItem.classList.add('event-description');
-      descItem.classList.add('hidden');
-      descItem.innerHTML = event.querySelectorAll('description')[0].innerHTML
+      // Display filtered events
+      document.getElementById("cards-wrapper").innerHTML = events_data;
+    })
+    .catch(error => {
+      console.error("Error fetching and generating events:", error);
+    });
+}
 
-      eventItem.appendChild(descItem);
+// Function to filter events
+function filterEvents(events, filterValue, filterFunction) {
+  return filterFunction(events, filterValue);
+}
+
+// Function to filter events by title
+function titleFilter(events, title) {
+  if (!title) return events;
+  return events.filter(item =>
+    item.querySelector("title").innerHTML.toLowerCase().includes(title.trim().toLowerCase())
+  );
+}
 
 
-      eventsContainer.appendChild(eventItem);
+function dateFilter(events, startDate) {
+    if (!startDate) return events;
+
+    // Extract the year from the input date
+    const [, year] = startDate.match(/\d{4}/) || []; // Extracts the year if present
+
+    // Construct a regular expression pattern to match the start date format without the year
+    const patternWithoutYear = startDate.replace(/\d{4}/, '').trim().replace(/,/g, '').replace(/\s+/g, '.*');
+
+    const regexWithoutYear = new RegExp(patternWithoutYear, 'i');
+
+    return events.filter(item => {
+        const startDateText = item.querySelector("description").innerHTML.toLowerCase();
+
+        // Check if the event's description matches the pattern without the year
+        if (regexWithoutYear.test(startDateText)) {
+            // If it matches, check if the year matches if it is present in the event's description
+            return !year || startDateText.includes(year);
+        }
+        return false;
+    });
+}
+
+// Function to filter events by description
+function descriptionFilter(events, description) {
+  if (!description) return events;
+  return events.filter(item =>
+    item.querySelector("description").innerHTML.toLowerCase().includes(description.trim().toLowerCase())
+  );
+}
+
+// Event listener for form submission
+document.querySelector('.filter-form').addEventListener('submit', function(event) {
+  event.preventDefault();
+
+  // Get the filter values from the form fields
+  let title = document.getElementById('title').value;
+  let start = dateConverter(document.getElementById('start').value);
+  let desc = document.getElementById('desc').value;
+
+  let filterObj = {
+           title,
+           startDate: start,
+           description: desc
     }
 
+  // Fetch and generate events with the updated filter values
+  fetchAndGenerateEvents(filterObj);
+});
 
-    if(events.length == 0) {
-      let noItem = document.createElement('p');
-      noItem.classList.add('no-items-found');
-      noItem.innerHTML = 'No events found.';
+// Initial fetch and generation of events when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+  let title = getQueryParam('title');
+  let start = dateConverter(getQueryParam('start'));
+  let desc = getQueryParam('desc');
 
-      eventsContainer.appendChild(noItem);
+  let filterObj = {
+         title,
+         startDate: start,
+         description: desc
+  }
+
+  // Fetch and generate events with the default filter values
+  fetchAndGenerateEvents(filterObj);
+});
+
+// Fetches and generates events with filters sent to blank
+const defaultFilters = {
+  title: "",
+  startDate: "",
+  description: ""
+};
+fetchAndGenerateEvents(defaultFilters);
+
+// Clear filter button resets filters by refreshing page
+document.querySelector('.filter-form').addEventListener('reset', function(event) {
+  location.reload();
+});
+
+// Toggles the bottom two lines to be visible
+document.getElementById('cards-wrapper').addEventListener('click', function(event) {
+  const target = event.target;
+
+  // Check if the clicked element is the toggle button inside a card
+  if (target.matches('.toggle-btn')) {
+    // Get the parent card element
+    const card = target.closest('.card');
+
+    // Get the title and description elements
+    const title = card.querySelector('.p-name');
+    const description = card.querySelector('div p');
+
+    // Check if inline style is explicitly set
+    const titleDisplayStyle = window.getComputedStyle(title).display;
+    const descriptionDisplayStyle = window.getComputedStyle(description).display;
+
+    // Toggle the display of title and description
+    if (titleDisplayStyle === 'none' || descriptionDisplayStyle === 'none') {
+      title.style.display = 'block';
+      description.style.display = 'block';
+    } else {
+      title.style.display = 'none';
+      description.style.display = 'none';
     }
-
-
-    document.querySelector('.results-count').innerHTML = `Showing: ${events.length}/${totalEvents} events`
-
-
-
-  })
-  .catch((error) => {
-    console.log(error);
-  });
-
-
-
-
+  }
+});

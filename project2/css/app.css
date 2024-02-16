@@ -21,9 +21,19 @@ h1.page-title {
 
 header.header nav {
   display: flex;
+
 }
 
+.filter-form {
+      display: flex;
+      flex-wrap: wrap;
+}
 
+.buttons {
+      display: flex;
+      justify-content: flex-end;
+
+}
 
 header.header .nav .nav-item {
   color: #FFFFFF;
@@ -32,8 +42,6 @@ header.header .nav .nav-item {
   padding: 8px 16px;
   border: 1px solid #446083;
 }
-
-
 
 header.header .nav .nav-item.active {
   color: #e6b45f;
@@ -52,29 +60,122 @@ header.header {
 
 header.header .page-header {
   margin-top: 30px;
-  padding: 10px;
   border-bottom: 2px solid #dc7933;
 }
 
 #cards-wrapper {
   display: flex;
+  flex-direction: row;
+  justify-content: space-around;
   flex-wrap: wrap;
-  column-gap: 5px;
-  row-gap: 10px;
-  list-style: none;
+  padding: 20px;
 }
 
 .card img {
-  max-width: 300px;
+  width: 100%;
   margin: 0;
 }
 
+label {
+  padding: 2px;
+}
+
 .card{
-  flex: 0 1 calc(20% - 1em);
-  border: 1px solid #000000;
+  margin-bottom: 10px;
+  width: 19%;
+  border: 1px solid #e2e5e8;
 
 }
 
 .card p, .card h3, .card button{
   margin: 0.5em;
 }
+
+.p-description {
+    display: none;
+}
+
+.p-name {
+    margin: 0.5em;
+    display: none
+}
+
+div p {
+    display: none;
+}
+
+.filter-form {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+}
+
+.filter-form .form-field {
+  background-color: #eaeaea;
+  border-radius: 3px;
+  padding: 5px;
+  margin-right: 10px;
+  color: #212020;
+
+}
+
+.filter-form .form-field input {
+  border: none;
+}
+
+.filter-form button {
+  padding: 5px;
+  margin-right: 10px;
+  border-radius: 3px;
+  border: none;
+}
+
+@media (max-width: 768px) {
+  #cards-wrapper {
+    flex-direction: column;
+  }
+
+  .card {
+    margin: 5px;
+    width: 100%;
+  }
+
+  header.header nav {
+    flex-direction: column;
+  }
+
+  header.header nav .nav-item {
+    margin-top: 5px;
+  }
+
+  .filter-form {
+    flex-flow: column;
+    align-items: center;
+  }
+
+  .form-field {
+    margin: 5px;
+  }
+
+  .filter-form div {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  input {
+    width: 90%;
+  }
+
+  .filter-form div.buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .filter-form div button {
+    width: 49%;
+    margin: 0;
+    padding: 10px;
+    align-items: center;
+  }
+}
+
