@@ -124,6 +124,10 @@ section.cards-wrapper .event-item .learn-more-button:hover {
   font-size: .7em;
 }
 
+.p-description {
+    display: none;
+}
+
 /* Responsive layout */
 @media (max-width: 768px) {
   section.cards-wrapper {

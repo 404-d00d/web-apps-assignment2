@@ -303,7 +303,7 @@ fetch(dataFetchUrl)
 
       const eventDetails = document.createElement('p');
       eventDetails.classList.add('event-description', 'hidden');
-      eventDetails.innerHTML = eventData.querySelectorAll('description')[0].innerHTML;
+      eventDetails.innerHTML = eventData.querySelectorAll('description')[0].innerHTML.replace(']]>','');
       eventBlock.appendChild(eventDetails);
 
       eventsDisplayArea.appendChild(eventBlock);
