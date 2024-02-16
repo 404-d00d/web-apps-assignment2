@@ -2,16 +2,16 @@
 
 // converts date on rss file into proper format shown on rubric
 function dateConverter (daet) {
-    var event_date = daet;
-    event_date = event_date.replace(event_date.substring(17, 29), '');
-    var event_day = event_date.substring(5, 7);
-    var event_month = event_date.substring(8, 12);
-    event_date = event_date.substring(0, 4)+' '+event_month+' '+event_day+', '+event_date.substring(12, 17);
-    event_date = event_date.replace('Mon', 'Monday').replace('Jan', 'January').replace('Feb', 'February');
-    event_date = event_date.replace('Mar', 'March').replace('Apr', 'April');
-    event_date = event_date.replace('Tue', 'Tuesday').replace('Wed', 'Wednesday').replace('Thu', 'Thursday');
-    event_date = event_date.replace('Fri', 'Friday').replace('Sat', 'Saturday').replace('Sun', 'Sunday');
-    return event_date;
+  var event_date = daet;
+  event_date = event_date.replace(event_date.substring(17, 29), '');
+  var event_day = event_date.substring(5, 7);
+  var event_month = event_date.substring(8, 12);
+  event_date = event_date.substring(0, 4)+' '+event_month+' '+event_day+', '+event_date.substring(12, 17);
+  event_date = event_date.replace('Mon', 'Monday').replace('Jan', 'January').replace('Feb', 'February');
+  event_date = event_date.replace('Mar', 'March').replace('Apr', 'April');
+  event_date = event_date.replace('Tue', 'Tuesday').replace('Wed', 'Wednesday').replace('Thu', 'Thursday');
+  event_date = event_date.replace('Fri', 'Friday').replace('Sat', 'Saturday').replace('Sun', 'Sunday');
+  return event_date;
 }
 
 // Function to fetch RSS feed and generate HTML content
@@ -78,28 +78,74 @@ function titleFilter(events, title) {
   );
 }
 
+//this function i used to used in dataFilter function
+function parseUserInputDate(input) {
+  let parsedDate;
+
+  // Match patterns like "30/01/2024" or "01/30/2024"
+  let dateParts = input.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (dateParts) {
+    // Determine if the first part is the day or month
+    // This will depend on the expected date format for your users
+    // Here, we'll assume "DD/MM/YYYY" for the example
+    const day = parseInt(dateParts[1], 10);
+    const month = parseInt(dateParts[2], 10) - 1; // Adjust for zero-indexed months
+    const year = parseInt(dateParts[3], 10);
+
+    parsedDate = new Date(year, month, day);
+  }
+
+  // Match patterns like "Jan 30" or "30 Jan"
+  if (!parsedDate || isNaN(parsedDate.getTime())) {
+    dateParts = input.match(/(\d{1,2})\s*(\w{3})\s*(\d{4})?|(\w{3})\s*(\d{1,2})\s*(\d{4})?/);
+    if (dateParts) {
+      let day, month, year;
+
+      if (dateParts[1] && dateParts[2]) { // This is the DD MMM YYYY or DD MMM format
+        day = parseInt(dateParts[1], 10);
+        month = dateParts[2];
+        year = dateParts[3] ? parseInt(dateParts[3], 10) : new Date().getFullYear();
+      } else if (dateParts[4] && dateParts[5]) { // This is the MMM DD format
+        day = parseInt(dateParts[5], 10);
+        month = dateParts[4];
+        year = dateParts[6] ? parseInt(dateParts[6], 10) : new Date().getFullYear();
+      }
+
+      // Convert month name to month number
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const monthIndex = monthNames.indexOf(month);
+
+      // Check if month name is valid
+      if (monthIndex !== -1) {
+        parsedDate = new Date(year, monthIndex, day);
+      }
+    }
+  }
+
+  // If the date is still invalid, attempt ISO date format parsing as a fallback
+  if (!parsedDate || isNaN(parsedDate.getTime())) {
+    parsedDate = new Date(input);
+  }
+
+  // Return the parsed date if valid, otherwise return null
+  return parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null;
+}
 
 function dateFilter(events, startDate) {
-    if (!startDate) return events;
+  if (!startDate) return events;
 
-    // Extract the year from the input date
-    const [, year] = startDate.match(/\d{4}/) || []; // Extracts the year if present
+  // Use parseUserInputDate to get a Date object for the start date
+  const userInputDate = parseUserInputDate(startDate);
+  if (!userInputDate) return events; // If parsing failed, return all events
 
-    // Construct a regular expression pattern to match the start date format without the year
-    const patternWithoutYear = startDate.replace(/\d{4}/, '').trim().replace(/,/g, '').replace(/\s+/g, '.*');
+  return events.filter(item => {
+    // Assuming your RSS items have a date element, parse it
+    const eventDateStr = item.querySelector("start").textContent;
+    const eventDate = new Date(eventDateStr);
 
-    const regexWithoutYear = new RegExp(patternWithoutYear, 'i');
-
-    return events.filter(item => {
-        const startDateText = item.querySelector("description").innerHTML.toLowerCase();
-
-        // Check if the event's description matches the pattern without the year
-        if (regexWithoutYear.test(startDateText)) {
-            // If it matches, check if the year matches if it is present in the event's description
-            return !year || startDateText.includes(year);
-        }
-        return false;
-    });
+    // Compare the dates; adjust based on your specific needs
+    return eventDate.setHours(0,0,0,0) === userInputDate.setHours(0,0,0,0);
+  });
 }
 
 // Function to filter events by description
@@ -116,18 +162,19 @@ document.querySelector('.filter-form').addEventListener('submit', function(event
 
   // Get the filter values from the form fields
   let title = document.getElementById('title').value;
-  let start = dateConverter(document.getElementById('start').value);
+  let start = document.getElementById('start').value; // Directly use the input value
   let desc = document.getElementById('desc').value;
 
   let filterObj = {
-           title,
-           startDate: start,
-           description: desc
-    }
+    title,
+    startDate: start, // No conversion here; let dateFilter handle it
+    description: desc
+  };
 
   // Fetch and generate events with the updated filter values
   fetchAndGenerateEvents(filterObj);
 });
+
 
 // Initial fetch and generation of events when the page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -136,9 +183,9 @@ document.addEventListener('DOMContentLoaded', function() {
   let desc = getQueryParam('desc');
 
   let filterObj = {
-         title,
-         startDate: start,
-         description: desc
+    title,
+    startDate: start,
+    description: desc
   }
 
   // Fetch and generate events with the default filter values
