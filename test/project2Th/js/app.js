@@ -219,6 +219,36 @@ function filterEventsByDate(eventArray, filterCriteria) {
   return dateFilteredEvents;
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('clearFiltersButton').addEventListener('click', clearFiltersAndReloadData);
+});
+function clearFiltersAndReloadData() {
+  // Clear the input fields
+  document.querySelector('#title').value = '';
+  document.querySelector('#desc').value = '';
+  document.querySelector('#start').value = '';
+
+  // Optionally, if you need to reset any other state or UI elements, do it here
+
+  // Call the function to fetch and display all events (assuming this function exists)
+  fetchAndDisplayEvents();
+}
+function fetchAndDisplayEvents() {
+  fetch('data/events.rss')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.text(); // Get the response body as text
+    })
+    .then(str => {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(str, "application/xml");
+      displayEvents(xmlDoc); // Function to process and display events
+    })
+    .catch(error => console.error('Failed to fetch events:', error));
+}
+
 
 
 // Function to filter events by description
