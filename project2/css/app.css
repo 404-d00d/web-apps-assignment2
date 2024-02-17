@@ -2,7 +2,7 @@ body {
   font-family: "Segoe-UI", Roboto, Helvetica, Arial, serif;
   margin: 0;
 }
-
+/*CSS for the nav bar*/
 header.header {
   background-color: #0d2441;
   padding: 20px;
@@ -21,18 +21,12 @@ h1.page-title {
 
 header.header nav {
   display: flex;
-
 }
 
-.filter-form {
-      display: flex;
-      flex-wrap: wrap;
-}
-
+/*CSS for the filter buttons*/
 .buttons {
-      display: flex;
-      justify-content: flex-end;
-
+  display: flex;
+  justify-content: flex-end;
 }
 
 header.header .nav .nav-item {
@@ -55,7 +49,6 @@ header.header .nav .nav-item:hover {
 
 header.header {
   color: #FFFFFF;
-
 }
 
 header.header .page-header {
@@ -63,6 +56,21 @@ header.header .page-header {
   border-bottom: 2px solid #dc7933;
 }
 
+/*Doesn't show description until the Learn More button is pressed*/
+.p-description {
+  display: none;
+}
+
+.p-name {
+  margin: 0.5em;
+  display: none
+}
+
+#page-count {
+  color: steelblue;
+}
+
+/*Sets layout for the cards*/
 #cards-wrapper {
   display: flex;
   flex-direction: row;
@@ -71,6 +79,7 @@ header.header .page-header {
   padding: 20px;
 }
 
+/*Layout for the image*/
 .card img {
   width: 100%;
   margin: 0;
@@ -84,26 +93,18 @@ label {
   margin-bottom: 10px;
   width: 19%;
   border: 1px solid #e2e5e8;
-
 }
 
+/*Format of text on card*/
 .card p, .card h3, .card button{
   margin: 0.5em;
 }
 
-.p-description {
-    display: none;
-}
-
-.p-name {
-    margin: 0.5em;
-    display: none
-}
-
 div p {
-    display: none;
+  display: none;
 }
 
+/*CSS for the filters*/
 .filter-form {
   display: flex;
   flex-flow: row wrap;
@@ -113,23 +114,24 @@ div p {
 .filter-form .form-field {
   background-color: #eaeaea;
   border-radius: 3px;
-  padding: 5px;
+  padding: 8px;
   margin-right: 10px;
   color: #212020;
-
 }
 
 .filter-form .form-field input {
   border: none;
+  padding: 2px;
 }
 
 .filter-form button {
-  padding: 5px;
+  padding: 10px;
   margin-right: 10px;
   border-radius: 3px;
   border: none;
 }
 
+/*Format if screen is less than 768 px*/
 @media (max-width: 768px) {
   #cards-wrapper {
     flex-direction: column;
@@ -151,22 +153,29 @@ div p {
   .filter-form {
     flex-flow: column;
     align-items: center;
+    flex-flow: row wrap;
   }
 
   .form-field {
     margin: 5px;
   }
 
-  .filter-form div {
+  /*Adjusts filter layout*/
+  .filter-form .form-field {
     width: 100%;
     margin-bottom: 10px;
+    margin-right: 10px;
   }
 
   input {
-    width: 90%;
+    width: 89%;
+    border: none;
+    padding: 2px;
   }
 
   .filter-form div.buttons {
+    width: 100%;
+    margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
   }

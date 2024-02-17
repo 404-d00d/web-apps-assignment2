@@ -1,8 +1,7 @@
 "use strict";
-
-// converts date on rss file into proper format shown on rubric
-function dateConverter (daet) {
-  var event_date = daet;
+// Converts inputted date to have uniform layout
+function dateConverter (date) {
+  var event_date = date;
   event_date = event_date.replace(event_date.substring(17, 29), '');
   var event_day = event_date.substring(5, 7);
   var event_month = event_date.substring(8, 12);
@@ -14,17 +13,15 @@ function dateConverter (daet) {
   return event_date;
 }
 
-// Function to fetch RSS feed and generate HTML content
+// Function to fetch RSS file and generate HTML content
 function fetchAndGenerateEvents(filterObj) {
   const RSS_File = "events.rss";
-
   fetch(RSS_File)
     .then(response => response.text())
     .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
     .then(data => {
       const items = data.querySelectorAll("item");
-      let events = Array.from(items); // Convert NodeList to array for filtering
-
+      let events = Array.from(items);
       // Apply filters
       if (filterObj.title) {
         events = filterEvents(events, filterObj.title, titleFilter);
@@ -35,8 +32,7 @@ function fetchAndGenerateEvents(filterObj) {
       if (filterObj.description) {
         events = filterEvents(events, filterObj.description, descriptionFilter);
       }
-
-      // Generate HTML content
+      // Generate HTML content for card
       let events_data = ``;
       events.forEach(item => {
         events_data += `
@@ -55,9 +51,6 @@ function fetchAndGenerateEvents(filterObj) {
       const totalPageShowings = events.length;
       const totalEvents = items.length;
       document.getElementById("page-count").textContent = `Showing: ${totalPageShowings} / ${totalEvents}`;
-
-
-      // Display filtered events
       document.getElementById("cards-wrapper").innerHTML = events_data;
     })
     .catch(error => {
@@ -78,40 +71,16 @@ function titleFilter(events, title) {
   );
 }
 
-//this function i used to used in dataFilter function
+//Used in the dataFilter function to go through the inputted date
 function parseUserInputDate(input) {
   let parsedDate;
-
-  // Match patterns like "30/01/2024" or "01/30/2024"
   let dateParts = input.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (dateParts) {
-    // Determine if the first part is the day or month
-    // This will depend on the expected date format for your users
-    // Here, we'll assume "DD/MM/YYYY" for the example
-    const day = parseInt(dateParts[1], 10);
-    const month = parseInt(dateParts[2], 10) - 1; // Adjust for zero-indexed months
-    const year = parseInt(dateParts[3], 10);
-
-    parsedDate = new Date(year, month, day);
-  }
 
   // Match patterns like "Jan 30" or "30 Jan"
   if (!parsedDate || isNaN(parsedDate.getTime())) {
     dateParts = input.match(/(\d{1,2})\s*(\w{3})\s*(\d{4})?|(\w{3})\s*(\d{1,2})\s*(\d{4})?/);
     if (dateParts) {
       let day, month, year;
-
-      if (dateParts[1] && dateParts[2]) { // This is the DD MMM YYYY or DD MMM format
-        day = parseInt(dateParts[1], 10);
-        month = dateParts[2];
-        year = dateParts[3] ? parseInt(dateParts[3], 10) : new Date().getFullYear();
-      } else if (dateParts[4] && dateParts[5]) { // This is the MMM DD format
-        day = parseInt(dateParts[5], 10);
-        month = dateParts[4];
-        year = dateParts[6] ? parseInt(dateParts[6], 10) : new Date().getFullYear();
-      }
-
-      // Convert month name to month number
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const monthIndex = monthNames.indexOf(month);
 
@@ -131,6 +100,7 @@ function parseUserInputDate(input) {
   return parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null;
 }
 
+// Filter through the cards with date
 function dateFilter(events, startDate) {
   if (!startDate) return events;
 
@@ -139,11 +109,10 @@ function dateFilter(events, startDate) {
   if (!userInputDate) return events; // If parsing failed, return all events
 
   return events.filter(item => {
-    // Assuming your RSS items have a date element, parse it
     const eventDateStr = item.querySelector("start").textContent;
     const eventDate = new Date(eventDateStr);
 
-    // Compare the dates; adjust based on your specific needs
+    // Compare the dates
     return eventDate.setHours(0,0,0,0) === userInputDate.setHours(0,0,0,0);
   });
 }
@@ -156,18 +125,18 @@ function descriptionFilter(events, description) {
   );
 }
 
-// Event listener for form submission
+// Event listener for submit button
 document.querySelector('.filter-form').addEventListener('submit', function(event) {
   event.preventDefault();
 
   // Get the filter values from the form fields
   let title = document.getElementById('title').value;
-  let start = document.getElementById('start').value; // Directly use the input value
+  let start = document.getElementById('start').value;
   let desc = document.getElementById('desc').value;
 
   let filterObj = {
     title,
-    startDate: start, // No conversion here; let dateFilter handle it
+    startDate: start,
     description: desc
   };
 
@@ -209,16 +178,13 @@ document.querySelector('.filter-form').addEventListener('reset', function(event)
 document.getElementById('cards-wrapper').addEventListener('click', function(event) {
   const target = event.target;
 
-  // Check if the clicked element is the toggle button inside a card
   if (target.matches('.toggle-btn')) {
-    // Get the parent card element
     const card = target.closest('.card');
 
     // Get the title and description elements
     const title = card.querySelector('.p-name');
     const description = card.querySelector('div p');
 
-    // Check if inline style is explicitly set
     const titleDisplayStyle = window.getComputedStyle(title).display;
     const descriptionDisplayStyle = window.getComputedStyle(description).display;
 
